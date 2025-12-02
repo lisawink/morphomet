@@ -6,7 +6,10 @@ notebooks/.ipynb_checkpoints/
 
 #Ignore folders
 data/
+figures/
 
 # Ignore specific files
 .DS_Store
 src/__pycache__/
+notebooks/visualisations/combine_df.ipynb
+notebooks/visualisations/SM_param_map.ipynb

@@ -20,6 +20,7 @@ import statsmodels.api as sm
 def convert_to_point(stations, input_crs='EPSG:4326', output_crs='EPSG:31468', lat_column = 'station_lat', lon_column = 'station_lon'):
     """
     Converts a DataFrame of station coordinates to a GeoDataFrame with Point geometries
+
     Parameters
     ----------
     stations : DataFrame
@@ -32,6 +33,7 @@ def convert_to_point(stations, input_crs='EPSG:4326', output_crs='EPSG:31468', l
         Name of the column containing latitude values. The default is 'station_lat'.
     lon_column : str, optional
         Name of the column containing longitude values. The default is 'station_lon'.
+
     Returns
     -------
     GeoDataFrame
@@ -73,6 +75,7 @@ def buffer_stations(stations, radius=100, input_crs='EPSG:4326', output_crs='EPS
 def city_centre_distance(stations, city_centre, input_crs='EPSG:4326', output_crs='EPSG:31468', lat_column = 'station_lat', lon_column = 'station_lon'):
     """
     Calculates the distance from each station to the city centre
+
     Parameters
     ----------
     stations : DataFrame
@@ -87,6 +90,7 @@ def city_centre_distance(stations, city_centre, input_crs='EPSG:4326', output_cr
         Name of the column containing latitude values. The default is 'station_lat'.
     lon_column : str, optional
         Name of the column containing longitude values. The default is 'station_lon'.
+
     Returns
     -------
     GeoDataFrame
@@ -101,6 +105,7 @@ def city_centre_distance(stations, city_centre, input_crs='EPSG:4326', output_cr
 def random_buffers(buildings, number=50, radius=100):
     """
     Generates buffers of set radius around random buildings
+
     Parameters
     ----------
     buildings : GeoDataFrame
@@ -109,6 +114,7 @@ def random_buffers(buildings, number=50, radius=100):
         Number of random building buffers to generate. The default is 50.
     radius : float, optional
         Radius of the buffer in the units of the buildings GeoDataFrame CRS. The default is 100.
+
     Returns
     -------
     GeoDataFrame
@@ -123,12 +129,18 @@ def make_compass_pie_slice(center, radius, compass_center_angle_deg, angle_width
     """
     Create a pie slice centered on a compass angle (0° = North, 90° = East, etc.).
     
-    Parameters:
-        center: shapely Point
-        radius: radius of the slice
-        compass_center_angle_deg: compass angle (0° = North, increases clockwise)
-        angle_width_deg: angular width of the slice (in degrees)
-        num_arc_points: number of arc points for smoothness
+    Parameters
+    ----------
+    center : shapely.Point
+        center point of the pie slice
+    radius : int 
+        radius of the slice
+    compass_center_angle_deg : int
+        compass angle (0° = North, increases clockwise)
+    angle_width_deg : int
+        angular width of the slice (in degrees)
+    num_arc_points : int
+        number of arc points for smoothness
         
     Returns:
         shapely Polygon representing the pie slice
@@ -153,6 +165,7 @@ def make_compass_pie_slice(center, radius, compass_center_angle_deg, angle_width
 def convert_to_pie(stations, input_crs='EPSG:4326', output_crs='EPSG:31468', lat_column = 'station_lat', lon_column = 'station_lon', radius=100, compass_angle=0, angle_width=60):
     """
     Converts a DataFrame of station coordinates to a GeoDataFrame with pie slice geometries
+
     Parameters
     ----------
     stations : DataFrame
@@ -171,11 +184,12 @@ def convert_to_pie(stations, input_crs='EPSG:4326', output_crs='EPSG:31468', lat
         Compass angle (0° = North, 90° = East, etc.) for the center of the pie slice. The default is 0.
     angle_width : float, optional
         Angular width of the pie slice (in degrees). The default is 60.
+
     Returns
     -------
     GeoDataFrame
         A GeoDataFrame with pie slice geometries representing the station coordinates, transformed to the specified output CRS.
-        """
+    """
     geometry = [Point(xy) for xy in zip(stations[lon_column], stations[lat_column])]
     stn_gdf = gpd.GeoDataFrame(stations, crs=input_crs, geometry=geometry)
     stn_gdf = stn_gdf.to_crs(output_crs)
@@ -307,7 +321,6 @@ def block_params(buildings,height,streets):
 
 def neighbourhood_graph_params(buildings, stations):
     """
-    
     Extracts the following parameters for each station:
     - Building adjacency
     - Interbuilding distance
@@ -382,8 +395,7 @@ def neighbourhood_graph_params(buildings, stations):
 def select_objects(buildings, streets, nodes, stations):
     """
 
-    Selects the buildings, streets and nodes for each station
-
+    Selects the buildings, streets and nodes for each station buffer
 
     Parameters
     ----------
@@ -455,19 +467,20 @@ def select_objects(buildings, streets, nodes, stations):
 def weighted_stats(group, i, weight):
     """
     Calculate weighted statistics for a given group.
+
     Parameters
     ----------
     group : DataFrame
         DataFrame containing the group of data
-        i : str
+    i : str
         Column name for which to calculate statistics
-        weight : str
+    weight : str
         Column name for weights
-        Returns
-        -------
-        Series
-        Series containing weighted statistics
-        
+
+    Returns
+    -------
+    Series
+        Series containing weighted statistics  
         """
     weighted_mean = np.sum(group[i] * group[weight]) / np.sum(group[weight])
     weighted_std = np.sqrt(np.sum(group[weight] * (group[i] - weighted_mean) ** 2) / np.sum(group[weight]))
@@ -514,23 +527,25 @@ def aggregate_params(selected_buildings, selected_streets, selected_nodes, stati
     - Building parameters
     - Street parameters
     - Node parameters
+
     Parameters
     ----------
     selected_buildings : GeoDataFrame
         GeoDataFrame containing selected building parameters
-        selected_streets : GeoDataFrame
+    selected_streets : GeoDataFrame
         GeoDataFrame containing selected street parameters
-        selected_nodes : GeoDataFrame
+    selected_nodes : GeoDataFrame
         GeoDataFrame containing selected node parameters
-        stations : GeoDataFrame
+    stations : GeoDataFrame
         GeoDataFrame containing station buffers
-        weight : str, optional
+    weight : str, optional
         Weighting parameter for weighted statistics. The default is 'BuAre'.
-        three_d : bool, optional
+    three_d : bool, optional
         If True, 3D building parameters are included. The default is False.
-        Returns
-        -------
-        stations : GeoDataFrame
+        
+    Returns
+    -------
+    stations : GeoDataFrame
         GeoDataFrame containing aggregated station parameters
         """
 
@@ -670,6 +685,7 @@ def agg_raster(raster_path, stations, parameter_name, majority=False):
 def calculate_statistics(data, target_column, bootstrap = False):
     """
     Calculate Pearson and Spearman correlations, mutual information, and temperature statistics for a single time period
+
     Parameters
     ----------
     data : DataFrame
@@ -678,6 +694,7 @@ def calculate_statistics(data, target_column, bootstrap = False):
         Name of the target column
     bootstrap : bool, optional
         If True, bootstrap analysis is performed for Spearman correlation. The default is False.
+
     Returns
     -------
     DataFrame
@@ -766,13 +783,14 @@ def calculate_statistics(data, target_column, bootstrap = False):
 
     return pd.DataFrame(results)
 
-def stats_multiple_times(radius, vars, var, timesteps, temp):
+def stats_multiple_times(radius, station_params, var, timesteps, temp):
     """
     Calculate various statistics between a variable and temperature data over multiple time periods.
+
     Parameters
     ----------
     radius : float
-    vars : GeoDataFrame
+    station_params : GeoDataFrame
         GeoDataFrame containing station parameters
     var : str
         Name of the variable to analyze
@@ -780,12 +798,12 @@ def stats_multiple_times(radius, vars, var, timesteps, temp):
         List of time period column names
     temp : DataFrame
         DataFrame containing temperature data
+
     Returns
     -------
-        
     data : DataFrame
         DataFrame containing melted data for the variable and temperature
-        """
+    """
     temp = temp.sub(temp.mean(axis=0), axis=1)
     temp = temp.div(temp.std(axis=0), axis=1)
 
@@ -854,7 +872,25 @@ def _ci_index(data):
     return index
 
 def bootstrap(func, X, Y, n_bootstrap=1000):
+    """
+    Perform bootstrap analysis for correlation between two variables.
 
+    Parameters
+    ----------
+    func : function
+        Correlation function (e.g., spearmanr)
+    X : array-like
+        First variable
+    Y : array-like
+        Second variable
+    n_bootstrap : int, optional
+        Number of bootstrap samples. The default is 1000.
+
+    Returns
+    -------
+    results : dict
+        Dictionary containing observed correlation, bootstrap statistics, and p-values
+    """
     # Step 1: Calculate observed  correlation
     rho_obs, _ = func(X, Y)
 
@@ -906,6 +942,21 @@ def bootstrap(func, X, Y, n_bootstrap=1000):
     return results
 
 def plot(radius, vars, param, temp, time):
+    """
+    Plot variable against temperature for a specific time period.
+
+    Parameters
+    ----------
+    radius : float
+    vars : GeoDataFrame
+        GeoDataFrame containing station parameters
+    param : str
+        Name of the variable to plot
+    temp : DataFrame
+        DataFrame containing temperature data
+    time : str
+        Time period column name
+    """
     vars = vars.merge(temp[time], left_on='station_id', right_on='station_id',how='inner')
 
     var = param

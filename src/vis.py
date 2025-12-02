@@ -15,10 +15,15 @@ import main
 def define_lcz_colors(lcz):
     """
     Define LCZ colors and map them to station IDs.
-    Parameters:
-    lcz (pd.DataFrame): DataFrame containing station IDs and their corresponding LCZ descriptions.
-    Returns a dictionary mapping station IDs to their corresponding LCZ colors.
-    
+
+    Parameters
+    ----------
+    lcz : DataFrame
+        DataFrame containing station IDs and their corresponding LCZ descriptions.
+    Returns
+    ------- 
+    dictionary
+        mapping station IDs to their corresponding LCZ colors.
     """
     # Data as a list of dictionaries
     data = [
@@ -55,7 +60,14 @@ def define_lcz_colors(lcz):
     return lcz_colors_dict
 
 def custom_lcz_legend():
-
+        """
+        Create a custom legend for LCZ colors.
+        
+        Returns
+        -------
+        list
+            List of Line2D objects for custom legend.
+        """
         lcz_colors = {
              
         "LCZ 1: Compact highrise": "#910613",
@@ -98,32 +110,27 @@ def custom_lcz_legend():
                                         markerfacecolor=lcz_colors[i], markersize=10) for i in range(len(lcz_labels))]
         return custom_lines
 
-def simple_plot(ax, radius, vars, var, time, stations):
+def simple_plot_reduced(ax, radius, station_params, var, time, temp, stations, var_name_mapping):
+    """
+    Create a scatter plot of a variable against temperature with statistical annotations.
 
-    data, spearman_corr, p_value, pearson_corr, r_squared, rmse, cooks_d, mi, y_pred = main.stats_multiple_times(radius, vars, var, time)
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to plot on.
+    radius : int
+        The radius for data selection.
+    station_params : GeoDataFrame
+        GeoDataFrame containing station parameters.
+    var : str
+        The variable to plot against temperature.
+    time : list
+        List of time period column names
+    temp : DataFrame
+        DataFrame containing temperature data
+    """
 
-    print(f"Pearson ρ: {pearson_corr:.2f}\n$r^2$: {r_squared:.3f}\nRMSE: {rmse:.3f}\nSpearman ρ: {spearman_corr:.2f}\nSpearman p-val: {p_value:.2f}\nMutual Info: {mi:.3f}\nMax Cook's d: {cooks_d:.3f}")
-
-    # Add textbox with correlation and Cook’s distance
-    textstr = f"$r^2$: {r_squared:.3f}\nRMSE: {rmse:.3f}\nSpearman ρ: {spearman_corr:.2f}\nSpearman p-val: {p_value:.2f}\nMax. Cook's D: {cooks_d:.3f}\nMutual Info: {mi:.3f}"
-    ax.text(0.55, 0.05, textstr, transform=ax.transAxes, fontsize=12,
-            bbox=dict(boxstyle="round,pad=0.3", edgecolor='grey', facecolor='none'))
-
-    lcz_colors = define_lcz_colors(stations)
-
-    colors = [lcz_colors[station] for station in data['station_id']]  # Assign colors to each station
-    ax.scatter(data[var], data['temperature'], marker ='x', c=colors, alpha =0.5, label = data['station_id'])
-    ax.plot(data[var], y_pred, color='black', linewidth=1)  # Plot regression
-    ax.set_xlabel(var,fontsize=16)
-    ax.set_ylabel('Normalised Temperature (K)',fontsize=16)
-    #ax.set_title(var+' vs Temperature'+' for '+str(radius)+'m radius')
-
-    for i, txt in enumerate(data['station_id'].unique()):
-        ax.annotate(txt, (data[data['station_id'] == txt][var].iloc[0], data[data['station_id'] == txt]['temperature'].iloc[0]), color=lcz_colors[txt])
-
-def simple_plot_reduced(ax, radius, vars, var, time, temp, stations, var_name_mapping):
-
-    data, mean, std, spearman_corr, p_value, pearson_corr, r_squared, rmse, cooks_d, mi, y_pred = main.stats_multiple_times(radius, vars, var, time, temp)
+    data, mean, std, spearman_corr, p_value, pearson_corr, r_squared, rmse, cooks_d, mi, y_pred = main.stats_multiple_times(radius, station_params, var, time, temp)
 
     print(f"Spearman ρ: {spearman_corr:.2f}\nMutual Info.: {mi:.2f}")
 
@@ -148,43 +155,3 @@ def simple_plot_reduced(ax, radius, vars, var, time, temp, stations, var_name_ma
     for i, txt in enumerate(data['station_id'].unique()):
         ax.annotate(txt, (data[data['station_id'] == txt][var].iloc[0], data[data['station_id'] == txt]['temperature'].iloc[0]), color=lcz_colors[txt])
 
-
-def plot_seasons(ax, radius, var, hiwn, hispn, hisn, hian):
-
-    data_hiwn, spearman_corr_hiwn, p_value_hiwn, pearson_corr_hiwn, r_squared_hiwn, rmse_hiwn, cooks_d_hiwn, mi_hiwn, y_pred_hiwn = stats_multiple_times(radius, var, hiwn)
-    data_hispn, spearman_corr_hispn, p_value_hispn, pearson_corr_hispn, r_squared_hispn, rmse_hispn, cooks_d_hispn, mi_hispn, y_pred_hispn = stats_multiple_times(radius, var, hispn)
-    data_hisn, spearman_corr_hisn, p_value_hisn, pearson_corr_hisn, r_squared_hisn, rmse_hisn, cooks_d_hisn, mi_hisn, y_pred_hisn = stats_multiple_times(radius, var, hisn)
-    data_hian, spearman_corr_hian, p_value_hian, pearson_corr_hian, r_squared_hian, rmse_hian, cooks_d_hian, mi_hian, y_pred_hian = stats_multiple_times(radius, var, hian)
-
-    # Add textbox with correlation and Cook’s distance
-    textstr = f"Winter\n$r^2$: {r_squared_hiwn:.3f}\nRMSE: {rmse_hiwn:.3f}\nSpearman ρ: {spearman_corr_hiwn:.2f}\nMax Cook's D: {cooks_d_hiwn:.3f}\nMutual Info: {mi_hiwn:.3f}"
-    ax.text(0.55, 0.05, textstr, transform=ax.transAxes, fontsize=12,
-            bbox=dict(boxstyle="round,pad=0.3", edgecolor='black', facecolor='none'))
-    
-    textstr = f"Summer\n$r^2$: {r_squared_hisn:.3f}\nRMSE: {rmse_hisn:.3f}\nSpearman ρ: {spearman_corr_hisn:.2f}\nMax Cook's D: {cooks_d_hisn:.3f}\nMutual Info: {mi_hispn:.3f}"
-    ax.text(0.05, 0.75, textstr, transform=ax.transAxes, fontsize=12,
-            bbox=dict(boxstyle="round,pad=0.3", edgecolor='orange', facecolor='none'))
-    
-    textstr = f"Spring\n$r^2$: {r_squared_hispn:.3f}\nRMSE: {rmse_hispn:.3f}\nSpearman ρ: {spearman_corr_hispn:.2f}\nMax Cook's D: {cooks_d_hispn:.3f}\nMutual Info: {mi_hisn:.3f}"
-    ax.text(0.55, 0.75, textstr, transform=ax.transAxes, fontsize=12,
-            bbox=dict(boxstyle="round,pad=0.3", edgecolor='green', facecolor='none'))
-    
-    textstr = f"Autumn\n$r^2$: {r_squared_hispn:.3f}\nRMSE: {rmse_hispn:.3f}\nSpearman ρ: {spearman_corr_hispn:.2f}\nMax Cook's D: {cooks_d_hispn:.3f}\nMutual Info: {mi_hian:.3f}"
-    ax.text(0.05, 0.05, textstr, transform=ax.transAxes, fontsize=12,
-            bbox=dict(boxstyle="round,pad=0.3", edgecolor='brown', facecolor='none'))
-
-    lcz_colors = define_lcz_colors()
-    colors = [lcz_colors[station] for station in data_hisn['station_id']]  # Assign colors to each station
-    scatter = ax.scatter(data_hisn[var], data_hisn['temperature'], marker ='x', c=colors, alpha =0.5, label = data_hisn['station_id'])
-
-    ax.plot(data_hiwn[var], y_pred_hiwn, color='black', linewidth=1)  # Plot regression
-    ax.plot(data_hisn[var], y_pred_hisn, color='orange', linewidth=1)  # Plot regression
-    ax.plot(data_hispn[var], y_pred_hispn, color='green', linewidth=1)  # Plot regression
-    ax.plot(data_hian[var], y_pred_hian, color='brown', linewidth=1)  # Plot regression
-
-    ax.set_xlabel(var,fontsize=16)
-    ax.set_ylabel('Normalised Temperature (K)',fontsize=16)
-    #ax.set_title(var+' vs Temperature'+' for '+str(radius)+'m radius')
-
-    for i, txt in enumerate(data_hiwn['station_id'][:30]):
-        ax.annotate(txt, (data_hiwn[var].iloc[i], data_hiwn['temperature'].iloc[i]), color=lcz_colors[txt])

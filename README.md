@@ -10,9 +10,9 @@ MorphoMet is a library for quantitive analysis of the relationship between urban
 Spearman correlation between morphometric variables and a weather variable for multiple locations in a city can be calculated for a single measurement time or for multiple timesteps. Methodology details are given in our [paper].
 
 ## Notebooks
-- For preprocessing data,
-- For caculating parameters,
-- For calculating fractions of night and synoptically-driven conditions,
+- For preprocessing data, [0_preprocess_data.ipynb](notebooks/0_preprocess_data.ipynb)
+- For caculating parameters, [1_calc_params.ipynb](notebooks/1_calc_params.ipynb)
+- For calculating fractions of night and synoptically-driven conditions, [2_synoptic_control.ipynb](notebooks/2_synoptic_control.ipynb)
 - For correlations,
 - For figures from the paper, 
 
