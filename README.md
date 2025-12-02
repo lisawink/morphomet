@@ -13,8 +13,8 @@ Spearman correlation between morphometric variables and a weather variable for m
 - For preprocessing data, [0_preprocess_data.ipynb](notebooks/0_preprocess_data.ipynb)
 - For caculating parameters, [1_calc_params.ipynb](notebooks/1_calc_params.ipynb)
 - For calculating fractions of night and synoptically-driven conditions, [2_synoptic_control.ipynb](notebooks/2_synoptic_control.ipynb)
-- For correlations,
-- For figures from the paper, 
+- For statistics per timestep, [3_model.ipynb](notebooks/3_model.ipynb)
+- For figures from the paper, [notebooks/visualisations/](notebooks/visualisations/)
 
 ## Functions
 - Main functions are given in [main](src/main.py)
