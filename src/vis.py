@@ -130,7 +130,54 @@ def simple_plot_reduced(ax, radius, station_params, var, time, temp, stations, v
         DataFrame containing temperature data
     """
 
-    data, mean, std, spearman_corr, p_value, pearson_corr, r_squared, rmse, cooks_d, mi, y_pred = main.stats_multiple_times(radius, station_params, var, time, temp)
+    data, mean, std, spearman_corr, p_value, pearson_corr, r_squared, rmse, cooks_d, mi, y_pred, slope, intercept, bse, summary = main.stats_multiple_times(station_params, var, time, temp)
+
+    print(f"Spearman ρ: {spearman_corr:.2f}\nMutual Info.: {mi:.2f}")
+    print(f"Slope: {slope:.2g}\nIntercept.: {intercept:.2g}")
+    print(summary)
+
+    # Add textbox with correlation and Cook’s distance
+    textstr = (
+        fr'$\rho_{{fix,300,\langle UHI\rangle}} = {spearman_corr:.2f}$' '\n'
+        fr'$\mathrm{{MI}}_{{fix,300,\langle UHI\rangle}} = {mi:.2f}$'
+    )
+    ax.text(0.98, 0.05, textstr, transform=ax.transAxes, fontsize=12, ha='right', va='bottom',
+            bbox=dict(boxstyle="round,pad=0.3", edgecolor='grey', facecolor='none'))
+
+    lcz_colors = define_lcz_colors(stations)
+    print(lcz_colors)
+    colors = [lcz_colors[station] for station in data['station_id']]  # Assign colors to each station
+    ax.scatter(data[var], data['temperature'], marker ='x', c=colors, alpha =0.5, label = data['station_id'])
+    ax.plot(data[var], y_pred, color='black', linewidth=1)  # Plot regression
+
+    ax.set_xlabel(var_name_mapping[var],fontsize=16)
+    ax.set_ylabel('Standardised Air Temperature',fontsize=16)
+    #ax.set_title(var+' vs Temperature'+' for '+str(radius)+'m radius')
+
+    for i, txt in enumerate(data['station_id'].unique()):
+        ax.annotate(' '+txt, (data[data['station_id'] == txt][var].iloc[0], data[data['station_id'] == txt]['temperature'].iloc[0]), color=lcz_colors[txt])
+
+def simple_plot_reduced_log(ax, radius, station_params, var, time, temp, stations, var_name_mapping):
+    """
+    Create a scatter plot of a variable against temperature with statistical annotations.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes to plot on.
+    radius : int
+        The radius for data selection.
+    station_params : GeoDataFrame
+        GeoDataFrame containing station parameters.
+    var : str
+        The variable to plot against temperature.
+    time : list
+        List of time period column names
+    temp : DataFrame
+        DataFrame containing temperature data
+    """
+
+    data, mean, std, spearman_corr, p_value, pearson_corr, r_squared, rmse, cooks_d, mi, y_pred, slope, intercept, bse, summary = main.stats_multiple_times(station_params, var, time, temp)
 
     print(f"Spearman ρ: {spearman_corr:.2f}\nMutual Info.: {mi:.2f}")
 
@@ -145,13 +192,12 @@ def simple_plot_reduced(ax, radius, station_params, var, time, temp, stations, v
     lcz_colors = define_lcz_colors(stations)
     print(lcz_colors)
     colors = [lcz_colors[station] for station in data['station_id']]  # Assign colors to each station
-    ax.scatter(data[var], data['temperature'], marker ='x', c=colors, alpha =0.5, label = data['station_id'])
+    ax.scatter(np.log(data[var]), data['temperature'], marker ='x', c=colors, alpha =0.5, label = data['station_id'])
     #ax.plot(data[var], y_pred, color='black', linewidth=1)  # Plot regression
 
     ax.set_xlabel(var_name_mapping[var],fontsize=16)
-    ax.set_ylabel('Standardised Temperature',fontsize=16)
+    ax.set_ylabel('Standardised Air Temperature',fontsize=16)
     #ax.set_title(var+' vs Temperature'+' for '+str(radius)+'m radius')
 
     for i, txt in enumerate(data['station_id'].unique()):
-        ax.annotate(txt, (data[data['station_id'] == txt][var].iloc[0], data[data['station_id'] == txt]['temperature'].iloc[0]), color=lcz_colors[txt])
-
+        ax.annotate(' '+txt, (np.log(data[data['station_id'] == txt][var].iloc[0]), data[data['station_id'] == txt]['temperature'].iloc[0]), color=lcz_colors[txt])

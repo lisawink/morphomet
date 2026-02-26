@@ -3,6 +3,7 @@ import geopandas as gpd
 import numpy as np
 import momepy
 import libpysal
+from libpysal import graph
 import geoplanar
 from itertools import combinations
 from shapely.geometry import Point, Polygon
@@ -197,6 +198,7 @@ def convert_to_pie(stations, input_crs='EPSG:4326', output_crs='EPSG:31468', lat
     stn_gdf = gpd.GeoDataFrame(stations, crs=output_crs, geometry=sectors)
     return stn_gdf
 
+
 def block_params(buildings,height,streets):
 
     """
@@ -265,10 +267,21 @@ def block_params(buildings,height,streets):
     bldgs['BuSWR'] = momepy.shared_walls(bldgs)/bldgs['BuPer']
     bldgs['BuOri'] = momepy.orientation(bldgs)
 
-    ## building adjacency
+    ## building alignment
 
     delaunay = libpysal.graph.Graph.build_triangulation(geoplanar.trim_overlaps(bldgs).centroid).assign_self_weight()
     bldgs['BuAli'] = momepy.alignment(bldgs['BuOri'], delaunay)
+
+    ## ibd or width
+    bldgs = bldgs[~bldgs.centroid.duplicated()]
+    bldgs = bldgs[~bldgs.centroid.isna()]
+    bldgs = bldgs.loc[~bldgs.centroid.is_empty].reset_index(drop=True)
+    delaunay_all = libpysal.graph.Graph.build_triangulation(bldgs.centroid)
+    knn1 = libpysal.graph.Graph.build_knn(bldgs.centroid, k=1)
+    knn5 = libpysal.graph.Graph.build_knn(bldgs.centroid, k=5)
+    bldgs['BuW_delaunay'] = momepy.neighbor_distance(bldgs, delaunay_all)
+    bldgs['BuW_knn1'] = momepy.neighbor_distance(bldgs, knn1)
+    bldgs['BuW_knn5'] = momepy.neighbor_distance(bldgs, knn5)
 
     # streets
     bldgs["street_index"] = momepy.get_nearest_street(bldgs, streets)
@@ -389,7 +402,7 @@ def neighbourhood_graph_params(buildings, stations):
     ibd = overlapping.groupby('station_id')['BuIBD'].mean()
     stations = stations.merge(bua, left_on='station_id', right_on=bua.index, how='left')
     stations = stations.merge(ibd, left_on='station_id', right_on=ibd.index, how='left')
-    
+
     return stations
 
 def select_objects(buildings, streets, nodes, stations):
@@ -551,9 +564,9 @@ def aggregate_params(selected_buildings, selected_streets, selected_nodes, stati
 
     df = pd.DataFrame()
 
-    two_d_list = ['BuAre','BuHt','BuPer','BuLAL','BuCCD_mean','BuCCD_std','BuCor','CyAre','CyInd','BuCCo','BuCWA','BuCon','BuElo','BuERI','BuFR','BuFF','BuFD','BuRec','BuShI','BuSqC','BuCorDev','BuSWR','BuOri','BuAli','StrAli']
+    two_d_list = ['BuAre','BuHt','BuPer','BuLAL','BuCCD_mean','BuCCD_std','BuCor','CyAre','CyInd','BuCCo','BuCWA','BuCon','BuElo','BuERI','BuFR','BuFF','BuFD','BuRec','BuShI','BuSqC','BuCorDev','BuSWR','BuOri','BuAli','StrAli','BuW_delaunay','BuW_knn1','BuW_knn5']
     three_d_list = two_d_list + ['BuCir', 'BuHem_3D', 'BuCon_3D', 'BuFra', 'BuFra_3D', 'BuCubo_3D', 'BuSqu', 'BuCube_3D', 'BumVE_3D', 'BuMVE_3D', 'BuFF_3D', 'BuEPI_3D', 'BuProx', 'BuProx_3D', 'BuEx', 'BuEx_3D', 'BuSpi', 'BuSpi_3D', 'BuPerC', 
-              'BuCf_3D', 'BuDep', 'BuDep_3D', 'BuGir', 'BuGir_3D', 'BuDisp', 'BuDisp_3D', 'BuRan', 'BuRan_3D', 'BuRough', 'BuRough_3D', 'BuSWA_3D', 'BuSurf_3D', 'BuVol_3D', 'BuSA_3D', 'BuSWR_3D','BuEWA_3D','BuEWR_3D']
+              'BuCf_3D', 'BuDep', 'BuDep_3D', 'BuGir', 'BuGir_3D', 'BuDisp', 'BuDisp_3D', 'BuRan', 'BuRan_3D', 'BuRough', 'BuRough_3D', 'BuSWA_3D', 'BuSurf_3D', 'BuVol_3D', 'BuSA_3D', 'BuSWR_3D','BuEWA_3D','BuEWR_3D','BuEFA_3D','BuEFR_3D']
     
     if three_d:
         param_list = three_d_list
@@ -566,20 +579,28 @@ def aggregate_params(selected_buildings, selected_streets, selected_nodes, stati
             df[[i+'_wmean',i+'_wstd',i+'_wmedian',i+'_wmin',i+'_wmax',i+'_wsum',i+'_wper25',i+'_wper75']] = selected_buildings.groupby('station_id')[[i,weight]].apply(weighted_stats, i, weight)
         df[[i+'_IQR',i+'_MAD',i+'_skew']] = selected_buildings.groupby('station_id')[i].agg([iqr,median_abs_deviation,skew])
         df[[i+'_per25',i+'_per75']] = selected_buildings.groupby('station_id')[i].quantile([0.25,0.75]).unstack()
-        df['BuNum'] = len(selected_buildings.groupby('station_id'))
+        df['BuNum'] = selected_buildings.groupby('station_id').agg('count')['oid']
 
     for i in ['StrLen', 'StrW', 'StrOpe', 'StrWD', 'StrH', 'StrHD', 'StrHW', 'BpM', 'StrLin', 'StrCNS']:
         df[[i+'_mean',i+'_median',i+'_std',i+'_min',i+'_max',i+'_sum' ,i+'_mode']] = momepy.describe_agg(selected_streets[i], selected_streets["station_id"], statistics=["mean", "median", "std", "min", "max", "sum", "mode"])
         df[[i+'_IQR',i+'_MAD',i+'_skew']] = selected_streets.groupby('station_id')[i].agg([iqr,median_abs_deviation,skew])
         df[[i+'_per25',i+'_per75']] = selected_streets.groupby('station_id')[i].quantile([0.25,0.75]).unstack()
+        if i != 'StrLen':    
+            df[[i+'_wmean',i+'_wstd',i+'_wmedian',i+'_wmin',i+'_wmax',i+'_wsum',i+'_wper25',i+'_wper75']] = selected_streets.groupby('station_id')[[i,'StrLen']].apply(weighted_stats, i, 'StrLen')
+        df['StrNum'] = selected_streets.groupby('station_id').agg('count')['street_index']
 
     for i in ['StrClo400', 'StrBet400', 'StrMes400', 'StrGam400', 'StrCyc400', 'StrENR400', 'StrDeg', 'StrSCl']:
         df[[i+'_mean',i+'_median',i+'_std',i+'_min',i+'_max',i+'_sum' ,i+'_mode']] = momepy.describe_agg(selected_nodes[i], selected_nodes["station_id"], statistics=["mean", "median", "std", "min", "max", "sum", "mode"])
         df[[i+'_IQR',i+'_MAD',i+'_skew']] = selected_nodes.groupby('station_id')[i].agg([iqr,median_abs_deviation,skew])
         df[[i+'_per25',i+'_per75']] = selected_nodes.groupby('station_id')[i].quantile([0.25,0.75]).unstack()
+        df['NdNum'] = selected_nodes.groupby('station_id').agg('count')['x']
 
     stations = stations.merge(df, left_on='station_id', right_on=df.index, how='left')
-    stations['BuCAR'] = stations['BuAre_sum']/stations.geometry.area
+    area = stations.geometry.area
+    stations['BuCAR'] = stations['BuAre_sum']/area
+    stations['BuDen'] = stations['BuNum']/area
+    stations['StrDen'] = stations['StrNum']/area
+    stations['NdDen'] = stations['NdNum']/area
 
     return stations
 
@@ -644,6 +665,7 @@ def agg_raster(raster_path, stations, parameter_name, majority=False):
     """
     with rasterio.open(raster_path) as src:
         crs = src.crs
+    orig_crs = stations.crs
     stations = stations.to_crs(crs.to_epsg())
 
     if stations.empty:
@@ -678,6 +700,8 @@ def agg_raster(raster_path, stations, parameter_name, majority=False):
         stations[parameter_name+'_sum'] = stations[parameter_name].apply(lambda x: x['sum'])
         if majority:
             stations[parameter_name+'_majority'] = stations[parameter_name].apply(lambda x: x['majority'])
+
+    stations = stations.to_crs(orig_crs)
 
     return stations
 
@@ -719,14 +743,14 @@ def calculate_statistics(data, target_column, bootstrap = False):
 
         std = y.std()
         mean = y.mean()
-        FRKART = y[y.index == 'FRKART'].values[0]
-        FRPDAS = y[y.index == 'FRPDAS'].values[0]
-        FRINST = y[y.index == 'FRINST'].values[0]
-        FRHBHF = y[y.index == 'FRHBHF'].values[0]
-        FRHOCH = y[y.index == 'FRHOCH'].values[0] 
-        FROPFS = y[y.index == 'FROPFS'].values[0]
-        FRDIET = y[y.index == 'FRDIET'].values[0]
-        FRTIEN = y[y.index == 'FRTIEN'].values[0]
+        FRKART = y[y.index == 'KART'].values[0]
+        FRPDAS = y[y.index == 'PDAS'].values[0]
+        FRINST = y[y.index == 'INST'].values[0]
+        FRHBHF = y[y.index == 'HBHF'].values[0]
+        FRHOCH = y[y.index == 'HOCH'].values[0] 
+        FROPFS = y[y.index == 'OPFS'].values[0]
+        FRDIET = y[y.index == 'DIET'].values[0]
+        FRTIEN = y[y.index == 'TIEN'].values[0]
         urban = np.mean([FRKART, FRPDAS, FRINST, FRHBHF])
         rural = np.mean([FRHOCH, FROPFS, FRDIET, FRTIEN])
         UHI_mag = urban - rural
@@ -783,13 +807,12 @@ def calculate_statistics(data, target_column, bootstrap = False):
 
     return pd.DataFrame(results)
 
-def stats_multiple_times(radius, station_params, var, timesteps, temp):
+def stats_multiple_times(station_params, var, timesteps, temp):
     """
     Calculate various statistics between a variable and temperature data over multiple time periods.
 
     Parameters
     ----------
-    radius : float
     station_params : GeoDataFrame
         GeoDataFrame containing station parameters
     var : str
@@ -804,17 +827,18 @@ def stats_multiple_times(radius, station_params, var, timesteps, temp):
     data : DataFrame
         DataFrame containing melted data for the variable and temperature
     """
+    #standardise air temp
     temp = temp.sub(temp.mean(axis=0), axis=1)
-    temp = temp.div(temp.std(axis=0), axis=1)
+    #temp = temp.div(temp.std(axis=0), axis=1)
 
-    vars = vars.merge(temp, left_on='station_id', right_on='station_id',how='inner')
-    vars["BuAdj"] = -vars["BuAdj"]  # Invert BuAdj values
+    vars_stn = station_params.merge(temp, left_on='station_id', right_on='station_id',how='inner')
+    #vars["BuAdj"] = -vars["BuAdj"]  # Invert BuAdj values
 
     #scaler = StandardScaler()
     #vars_scaled = scaler.fit_transform(vars)
     #vars = pd.DataFrame(vars_scaled, columns=vars.columns, index=vars.index)
 
-    data = vars[[var] + list(timesteps)].copy().reset_index()
+    data = vars_stn[[var] + list(timesteps)].copy().reset_index()
     data = data.melt(id_vars=[var,'station_id'], value_vars=timesteps, var_name='time', value_name='temperature')
     data = data.dropna()
 
@@ -841,10 +865,16 @@ def stats_multiple_times(radius, station_params, var, timesteps, temp):
         pearson_corr, _ = pearsonr(data[var], data['temperature'])
         X = sm.add_constant(data[var])  # Add constant for regression
         model = sm.OLS(data['temperature'], X).fit()
+        bse = model.bse[var]
         r_squared = model.rsquared
 
         # Get the predicted values (fitted values)
         y_pred = model.fittedvalues
+
+        # Get the slope params
+        slope = model.params[1]
+        intercept = model.params[0]
+        summary = model.summary()
 
         # Calculate the residuals (errors)
         residuals = data['temperature'] - y_pred
@@ -862,7 +892,7 @@ def stats_multiple_times(radius, station_params, var, timesteps, temp):
 
         mi = mutual_info_regression(data[[var]], data['temperature'].values)
 
-    return data, mean, std, spearman_corr, p_value, pearson_corr, r_squared, rmse, cooks_d, mi[0], y_pred
+    return data, mean, std, spearman_corr, p_value, pearson_corr, r_squared, rmse, cooks_d, mi[0], y_pred, slope, intercept, bse, summary
 
 def _ci_index(data):
     lower = np.percentile(data, 2.5)
@@ -941,13 +971,66 @@ def bootstrap(func, X, Y, n_bootstrap=1000):
 
     return results
 
-def plot(radius, vars, param, temp, time):
+def block_bootstrap_slope(X, Y, blocks, n_bootstrap=2000, add_constant=True):
+    """
+    Proper block bootstrap for OLS regression slope.
+    Blocks are resampled with replacement and duplicated if selected multiple times.
+    """
+
+    # Convert to DataFrame for easier handling
+    df = pd.DataFrame({
+        "X": X,
+        "Y": Y,
+        "block": blocks
+    }).reset_index(drop=True)
+
+    unique_blocks = df["block"].unique()
+
+    # ----- Fit observed model -----
+    X_model = sm.add_constant(df["X"]) if add_constant else df["X"]
+    model = sm.OLS(df["Y"], X_model).fit()
+    slope_obs = model.params[1]
+
+    slopes = []
+
+    for _ in range(n_bootstrap):
+
+        # Sample blocks WITH replacement
+        sampled_blocks = np.random.choice(unique_blocks,
+                                          size=len(unique_blocks),
+                                          replace=True)
+
+        # Collect rows block-by-block, preserving duplicates
+        boot_df = pd.concat(
+            [df[df["block"] == b] for b in sampled_blocks],
+            ignore_index=True
+        )
+
+        # Refit regression
+        Xb = sm.add_constant(boot_df["X"]) if add_constant else boot_df["X"]
+        model_boot = sm.OLS(boot_df["Y"], Xb).fit()
+
+        slopes.append(model_boot.params[1])
+
+    slopes = np.array(slopes)
+
+    results = {
+        "Observed slope": slope_obs,
+        "Bootstrap mean slope": np.mean(slopes),
+        "Bootstrap std (slope)": np.std(slopes, ddof=1),
+        "95% CI (percentile)": np.percentile(slopes, [2.5, 97.5]),
+        "68% CI (percentile)": np.percentile(slopes, [16, 84]),
+        "All bootstrap slopes": slopes
+    }
+
+    return results
+
+def plot(vars, param, temp, time):
     """
     Plot variable against temperature for a specific time period.
 
     Parameters
     ----------
-    radius : float
     vars : GeoDataFrame
         GeoDataFrame containing station parameters
     param : str
