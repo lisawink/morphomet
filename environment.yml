@@ -1,31 +1,38 @@
 name: morphoclim
 channels:
-  - defaults
+  - conda-forge
 dependencies:
-  - os
-  - sys
+  - python=3.11
+
+  # core numerical stack
   - numpy
   - scipy
   - pandas
-  - shapely
+
+  # geospatial stack
   - geopandas
-  - libpysal  
-  - momepy
   - shapely
-  - osmnx
-  - geoplanar
-  - neatnet
   - rasterio
   - rasterstats
-  - suncalc
-  - datetime
+  - osmnx
+  - libpysal
+  - momepy
+  - r-suncalc
+
+  # visualization
   - matplotlib
   - seaborn
   - plotly
-  - sklearn
+
+  # stats / ML
   - statsmodels
-  - itertools
-  - json
-  - importlib
+  - scikit-learn
+
+  # utilities
   - tqdm
 
+  # pip-only packages
+  - pip
+  - pip:
+      - geoplanar
+      - neatnet
