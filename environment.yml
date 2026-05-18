@@ -1,0 +1,31 @@
+name: morphoclim
+channels:
+  - defaults
+dependencies:
+  - os
+  - sys
+  - numpy
+  - scipy
+  - pandas
+  - shapely
+  - geopandas
+  - libpysal  
+  - momepy
+  - shapely
+  - osmnx
+  - geoplanar
+  - neatnet
+  - rasterio
+  - rasterstats
+  - suncalc
+  - datetime
+  - matplotlib
+  - seaborn
+  - plotly
+  - sklearn
+  - statsmodels
+  - itertools
+  - json
+  - importlib
+  - tqdm
+

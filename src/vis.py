@@ -1,6 +1,5 @@
 import os
 import sys
-import main
 import geopandas as gpd
 import pandas as pd
 from scipy.stats import pearsonr, spearmanr
