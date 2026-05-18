@@ -1,4 +1,4 @@
-name: morphoclim
+name: morphomet
 channels:
   - conda-forge
 dependencies:
@@ -30,9 +30,3 @@ dependencies:
 
   # utilities
   - tqdm
-
-  # pip-only packages
-  - pip
-  - pip:
-      - geoplanar
-      - neatnet
