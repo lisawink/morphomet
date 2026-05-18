@@ -1,5 +1,7 @@
 # Ignore environment files
 .env
+morphomet.yml
+morphoclim_020326.yml
 
 # Ignore Jupyter checkpoints
 notebooks/.ipynb_checkpoints/
@@ -12,7 +14,6 @@ src/__pycache__/
 
 # Ignore specific files
 .DS_Store
-morphoclim_020326.yml
 src/__pycache__/
 notebooks/compare_HW.ipynb
 notebooks/delaunay.ipynb
