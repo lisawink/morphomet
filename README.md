@@ -39,3 +39,8 @@ conda activate morphomet
 ```bash
 jupyter notebook
 ```
+Some notebooks require packages that are not available through conda and must be installed separately using `pip`:
+```bash
+pip install neatnet
+pip install geoplanar
+```
