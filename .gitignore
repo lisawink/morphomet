@@ -7,17 +7,21 @@ notebooks/.ipynb_checkpoints/
 #Ignore folders
 data/
 figures/
+notebooks/daytime/
 src/__pycache__/
 
 # Ignore specific files
 .DS_Store
+morphoclim_020326.yml
 src/__pycache__/
 notebooks/compare_HW.ipynb
 notebooks/delaunay.ipynb
+notebooks/1_calc_params_extra_calcs.ipynb
 notebooks/visualisations/combine_df.ipynb
 notebooks/visualisations/SM_param_map.ipynb
 notebooks/visualisations/scale_area.ipynb
 notebooks/visualisations/fig5_hin_corr_archive.ipynb
 notebooks/visualisations/fig5_hin_corr_merged_blocks.ipynb
 notebooks/visualisations/fig7_scale_archive.ipynb
+notebooks/visualisations/fig10_spider_plot.ipynb
 notebooks/visualisations/fig10_spider_plot_archive.ipynb

@@ -138,8 +138,8 @@ def simple_plot_reduced(ax, radius, station_params, var, time, temp, stations, v
 
     # Add textbox with correlation and Cook’s distance
     textstr = (
-        fr'$\rho_{{fix,300,\langle UHI\rangle}} = {spearman_corr:.2f}$' '\n'
-        fr'$\mathrm{{MI}}_{{fix,300,\langle UHI\rangle}} = {mi:.2f}$'
+        fr'$\rho_{{fix,300,ΔT}} = {spearman_corr:.2f}$' '\n'
+        fr'$\mathrm{{MI}}_{{fix,300,ΔT}} = {mi:.2f}$'
     )
     ax.text(0.98, 0.05, textstr, transform=ax.transAxes, fontsize=12, ha='right', va='bottom',
             bbox=dict(boxstyle="round,pad=0.3", edgecolor='grey', facecolor='none'))

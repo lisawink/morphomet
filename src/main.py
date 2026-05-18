@@ -239,6 +239,7 @@ def block_params(buildings,height,streets):
     # dimension
     bldgs['BuAre'] = bldgs.geometry.area
     bldgs['BuHt'] = height
+    bldgs['BuVol'] = bldgs.geometry.area * height
     bldgs['BuPer'] = bldgs.geometry.length
     bldgs['BuLAL'] = momepy.longest_axis_length(bldgs)
     bldgs[['BuCCD_mean','BuCCD_std']] = momepy.centroid_corner_distance(bldgs)
@@ -564,7 +565,7 @@ def aggregate_params(selected_buildings, selected_streets, selected_nodes, stati
 
     df = pd.DataFrame()
 
-    two_d_list = ['BuAre','BuHt','BuPer','BuLAL','BuCCD_mean','BuCCD_std','BuCor','CyAre','CyInd','BuCCo','BuCWA','BuCon','BuElo','BuERI','BuFR','BuFF','BuFD','BuRec','BuShI','BuSqC','BuCorDev','BuSWR','BuOri','BuAli','StrAli','BuW_delaunay','BuW_knn1','BuW_knn5']
+    two_d_list = ['BuAre','BuHt','BuVol','BuPer','BuLAL','BuCCD_mean','BuCCD_std','BuCor','CyAre','CyInd','BuCCo','BuCWA','BuCon','BuElo','BuERI','BuFR','BuFF','BuFD','BuRec','BuShI','BuSqC','BuCorDev','BuSWR','BuOri','BuAli','StrAli','BuW_delaunay','BuW_knn1','BuW_knn5']
     three_d_list = two_d_list + ['BuCir', 'BuHem_3D', 'BuCon_3D', 'BuFra', 'BuFra_3D', 'BuCubo_3D', 'BuSqu', 'BuCube_3D', 'BumVE_3D', 'BuMVE_3D', 'BuFF_3D', 'BuEPI_3D', 'BuProx', 'BuProx_3D', 'BuEx', 'BuEx_3D', 'BuSpi', 'BuSpi_3D', 'BuPerC', 
               'BuCf_3D', 'BuDep', 'BuDep_3D', 'BuGir', 'BuGir_3D', 'BuDisp', 'BuDisp_3D', 'BuRan', 'BuRan_3D', 'BuRough', 'BuRough_3D', 'BuSWA_3D', 'BuSurf_3D', 'BuVol_3D', 'BuSA_3D', 'BuSWR_3D','BuEWA_3D','BuEWR_3D','BuEFA_3D','BuEFR_3D']
     
@@ -769,6 +770,8 @@ def calculate_statistics(data, target_column, bootstrap = False):
                 'Mutual Information': None,
                 'Temp. Mean': None,
                 'Temp. Std. Dev.': None,
+                'Urban Temp.': None,
+                'Rural Temp.': None,
                 'UHI Magnitude': None,
             })
         else:
@@ -801,6 +804,8 @@ def calculate_statistics(data, target_column, bootstrap = False):
                 'Mutual Information': mi,
                 'Temp. Mean': mean,
                 'Temp. Std. Dev.': std,
+                'Urban Temp.': urban,
+                'Rural Temp.': rural,
                 'UHI Magnitude': UHI_mag}
             entry.update(bs)
             results.append(entry)
