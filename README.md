@@ -62,4 +62,4 @@ pip install geoplanar
 
 ## Citation
 
-If you use MorphoMet in your research, please cite the associated Zenodo release and/or accompanying publication.
+If you use MorphoMet in your research, please cite the associated Zenodo release and accompanying publication.
