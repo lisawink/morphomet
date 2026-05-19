@@ -1,4 +1,8 @@
-# MorphoMet - Linking Urban Morphometrics and Meteorology
+# MorphoMet 
+
+## Linking Urban Morphometrics and Meteorology
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20283958.svg)](https://doi.org/10.5281/zenodo.20283958)
 
 ## Quick Start
 
@@ -62,4 +66,6 @@ pip install geoplanar
 
 ## Citation
 
-If you use MorphoMet in your research, please cite the associated Zenodo release and accompanying publication.
+If you use MorphoMet in your research, please cite the associated Zenodo release:
+
+Winkler, L. (2026). MorphoMet (v0.1.1) [Software]. Zenodo. https://doi.org/10.5281/zenodo.20283958
