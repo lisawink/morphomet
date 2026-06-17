@@ -109,7 +109,7 @@ def custom_lcz_legend():
                                         markerfacecolor=lcz_colors[i], markersize=10) for i in range(len(lcz_labels))]
         return custom_lines
 
-def simple_plot_reduced(ax, radius, station_params, var, time, temp, stations, var_name_mapping):
+def simple_plot_reduced(ax, radius, station_params, var, time, temp, stations, var_name_mapping, loess_frac=0.66):
     """
     Create a scatter plot of a variable against temperature with statistical annotations.
 
@@ -137,8 +137,7 @@ def simple_plot_reduced(ax, radius, station_params, var, time, temp, stations, v
 
     # Add textbox with correlation and Cook’s distance
     textstr = (
-        fr'$\rho_{{fix,300,ΔT}} = {spearman_corr:.2f}$' '\n'
-        fr'$\mathrm{{MI}}_{{fix,300,ΔT}} = {mi:.2f}$'
+        fr'$\rho_{{fix,300,ΔT}} = {spearman_corr:.2f}$'
     )
     ax.text(0.98, 0.05, textstr, transform=ax.transAxes, fontsize=12, ha='right', va='bottom',
             bbox=dict(boxstyle="round,pad=0.3", edgecolor='grey', facecolor='none'))
@@ -147,7 +146,7 @@ def simple_plot_reduced(ax, radius, station_params, var, time, temp, stations, v
     print(lcz_colors)
     colors = [lcz_colors[station] for station in data['station_id']]  # Assign colors to each station
     ax.scatter(data[var], data['temperature'], marker ='x', c=colors, alpha =0.5, label = data['station_id'])
-    ax.plot(data[var], y_pred, color='black', linewidth=1)  # Plot regression
+    ax.plot(data[var], y_pred, color='grey', linewidth=1.5)  # Plot regression
 
     ax.set_xlabel(var_name_mapping[var],fontsize=16)
     ax.set_ylabel('Standardised Air Temperature',fontsize=16)
@@ -155,6 +154,10 @@ def simple_plot_reduced(ax, radius, station_params, var, time, temp, stations, v
 
     for i, txt in enumerate(data['station_id'].unique()):
         ax.annotate(' '+txt, (data[data['station_id'] == txt][var].iloc[0], data[data['station_id'] == txt]['temperature'].iloc[0]), color=lcz_colors[txt])
+
+    lowess = sm.nonparametric.lowess
+    temp_lowess = lowess(endog=data['temperature'], exog=data[var], is_sorted=False, frac=loess_frac)
+    ax.plot(temp_lowess[:, 0], temp_lowess[:, 1], color='blue', linewidth=2)
 
 def simple_plot_reduced_log(ax, radius, station_params, var, time, temp, stations, var_name_mapping):
     """

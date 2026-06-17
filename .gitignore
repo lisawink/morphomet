@@ -23,6 +23,8 @@ notebooks/visualisations/SM_param_map.ipynb
 notebooks/visualisations/scale_area.ipynb
 notebooks/visualisations/fig5_hin_corr_archive.ipynb
 notebooks/visualisations/fig5_hin_corr_merged_blocks.ipynb
+notebooks/visualisations/fig5_hin_corr_loess_detail.ipynb
+notebooks/visualisations/fig6_meteobike_270623_bootstrap.ipynb
 notebooks/visualisations/fig7_scale_archive.ipynb
 notebooks/visualisations/fig10_spider_plot.ipynb
 notebooks/visualisations/fig10_spider_plot_archive.ipynb
