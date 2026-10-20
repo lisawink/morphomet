@@ -68,4 +68,4 @@ pip install geoplanar
 
 If you use MorphoMet in your research, please cite the associated Zenodo release:
 
-Winkler, L. (2026). MorphoMet (v0.1.1) [Software]. Zenodo. https://doi.org/10.5281/zenodo.20283958
+Winkler, L. (2026). MorphoMet - Linking Urban Morphometrics and Meteorology (Version v0.1.3) [Software]. Zenodo. https://doi.org/10.5281/zenodo.20283957

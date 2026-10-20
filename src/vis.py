@@ -109,7 +109,7 @@ def custom_lcz_legend():
                                         markerfacecolor=lcz_colors[i], markersize=10) for i in range(len(lcz_labels))]
         return custom_lines
 
-def simple_plot_reduced(ax, radius, station_params, var, time, temp, stations, var_name_mapping, loess_frac=0.66):
+def simple_plot_reduced(ax, radius, station_params, var, time, temp, stations, var_name_mapping, loess=False, loess_frac=0.66):
     """
     Create a scatter plot of a variable against temperature with statistical annotations.
 
@@ -145,7 +145,7 @@ def simple_plot_reduced(ax, radius, station_params, var, time, temp, stations, v
     lcz_colors = define_lcz_colors(stations)
     print(lcz_colors)
     colors = [lcz_colors[station] for station in data['station_id']]  # Assign colors to each station
-    ax.scatter(data[var], data['temperature'], marker ='x', c=colors, alpha =0.5, label = data['station_id'])
+    ax.scatter(data[var], data['temperature'], marker ='x', c=colors, alpha =0.15, label = data['station_id'])
     ax.plot(data[var], y_pred, color='grey', linewidth=1.5)  # Plot regression
 
     ax.set_xlabel(var_name_mapping[var],fontsize=16)
@@ -154,10 +154,10 @@ def simple_plot_reduced(ax, radius, station_params, var, time, temp, stations, v
 
     for i, txt in enumerate(data['station_id'].unique()):
         ax.annotate(' '+txt, (data[data['station_id'] == txt][var].iloc[0], data[data['station_id'] == txt]['temperature'].iloc[0]), color=lcz_colors[txt])
-
-    lowess = sm.nonparametric.lowess
-    temp_lowess = lowess(endog=data['temperature'], exog=data[var], is_sorted=False, frac=loess_frac)
-    ax.plot(temp_lowess[:, 0], temp_lowess[:, 1], color='blue', linewidth=2)
+    if loess == True:
+        lowess = sm.nonparametric.lowess
+        temp_lowess = lowess(endog=data['temperature'], exog=data[var], is_sorted=False, frac=loess_frac)
+        ax.plot(temp_lowess[:, 0], temp_lowess[:, 1], color='blue', linewidth=2)
 
 def simple_plot_reduced_log(ax, radius, station_params, var, time, temp, stations, var_name_mapping):
     """

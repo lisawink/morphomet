@@ -333,7 +333,7 @@ def block_params(buildings,height,streets):
 
     return bldgs, streets, nodes
 
-def neighbourhood_graph_params(buildings, stations):
+def neighbourhood_graph_params(buildings, stations, is_ibd=True):
     """
     Extracts the following parameters for each station:
     - Building adjacency
@@ -385,12 +385,15 @@ def neighbourhood_graph_params(buildings, stations):
         ol_buildings['BuAdj'] = bua
 
         #calculate ibd
-        if len(ol_buildings) <= 2:
-            ol_buildings['BuIBD'] = None
+        if is_ibd == True:
+            if len(ol_buildings) <= 2:
+                ol_buildings['BuIBD'] = None
+            else:
+                delaunay = libpysal.graph.Graph.build_triangulation(ol_buildings.centroid).assign_self_weight()
+                ibd = momepy.mean_interbuilding_distance(ol_buildings, delaunay, ref_area_graph)
+                ol_buildings['BuIBD'] = ibd
         else:
-            delaunay = libpysal.graph.Graph.build_triangulation(ol_buildings.centroid).assign_self_weight()
-            ibd = momepy.mean_interbuilding_distance(ol_buildings, delaunay, ref_area_graph)
-            ol_buildings['BuIBD'] = ibd
+            ol_buildings['BuIBD'] = None
 
         overlapping.loc[ol_buildings.index, ['BuAdj', 'BuIBD']] = ol_buildings[['BuAdj', 'BuIBD']]
 
@@ -602,6 +605,70 @@ def aggregate_params(selected_buildings, selected_streets, selected_nodes, stati
     stations['BuDen'] = stations['BuNum']/area
     stations['StrDen'] = stations['StrNum']/area
     stations['NdDen'] = stations['NdNum']/area
+
+    return stations
+
+def aggregate_params_reduced(selected_buildings, selected_streets, selected_nodes, stations, weight='BuAre', three_d=False):
+    """
+    Aggregates the following parameters for each station:
+    - Building parameters
+    - Street parameters
+    - Node parameters
+
+    Parameters
+    ----------
+    selected_buildings : GeoDataFrame
+        GeoDataFrame containing selected building parameters
+    selected_streets : GeoDataFrame
+        GeoDataFrame containing selected street parameters
+    selected_nodes : GeoDataFrame
+        GeoDataFrame containing selected node parameters
+    stations : GeoDataFrame
+        GeoDataFrame containing station buffers
+    weight : str, optional
+        Weighting parameter for weighted statistics. The default is 'BuAre'.
+    three_d : bool, optional
+        If True, 3D building parameters are included. The default is False.
+        
+    Returns
+    -------
+    stations : GeoDataFrame
+        GeoDataFrame containing aggregated station parameters
+        """
+
+    df = pd.DataFrame()
+
+    two_d_list = ['BuAre','BuHt','BuERI','BuW_delaunay']
+    three_d_list = two_d_list + ['BuVol_3D','BuEWA_3D']
+    
+    if three_d:
+        param_list = three_d_list
+    else:
+        param_list = two_d_list
+
+    for i in param_list:
+        df[[i+'_mean',i+'_median',i+'_std',i+'_min',i+'_max',i+'_sum',i+'_mode']] = momepy.describe_agg(selected_buildings[i], selected_buildings["station_id"], statistics=["mean", "median", "std", "min", "max", "sum", "mode"])
+        if i != 'BuAre':    
+            df[[i+'_wmean',i+'_wstd',i+'_wmedian',i+'_wmin',i+'_wmax',i+'_wsum',i+'_wper25',i+'_wper75']] = selected_buildings.groupby('station_id')[[i,weight]].apply(weighted_stats, i, weight)
+        #df[[i+'_IQR',i+'_MAD',i+'_skew']] = selected_buildings.groupby('station_id')[i].agg([iqr,median_abs_deviation,skew])
+        #df[[i+'_per25',i+'_per75']] = selected_buildings.groupby('station_id')[i].quantile([0.25,0.75]).unstack()
+        #df['BuNum'] = selected_buildings.groupby('station_id').agg('count')['oid']
+
+    for i in ['StrHW']:
+        df[[i+'_mean',i+'_median',i+'_std',i+'_min',i+'_max',i+'_sum' ,i+'_mode']] = momepy.describe_agg(selected_streets[i], selected_streets["station_id"], statistics=["mean", "median", "std", "min", "max", "sum", "mode"])
+        #df[[i+'_IQR',i+'_MAD',i+'_skew']] = selected_streets.groupby('station_id')[i].agg([iqr,median_abs_deviation,skew])
+        #df[[i+'_per25',i+'_per75']] = selected_streets.groupby('station_id')[i].quantile([0.25,0.75]).unstack()
+        if i != 'StrLen':    
+            df[[i+'_wmean',i+'_wstd',i+'_wmedian',i+'_wmin',i+'_wmax',i+'_wsum',i+'_wper25',i+'_wper75']] = selected_streets.groupby('station_id')[[i,'StrLen']].apply(weighted_stats, i, 'StrLen')
+        #df['StrNum'] = selected_streets.groupby('station_id').agg('count')['street_index']
+
+    for i in ['StrClo400']:
+        df[[i+'_mean',i+'_median',i+'_std',i+'_min',i+'_max',i+'_sum' ,i+'_mode']] = momepy.describe_agg(selected_nodes[i], selected_nodes["station_id"], statistics=["mean", "median", "std", "min", "max", "sum", "mode"])
+        #df[[i+'_IQR',i+'_MAD',i+'_skew']] = selected_nodes.groupby('station_id')[i].agg([iqr,median_abs_deviation,skew])
+        #df[[i+'_per25',i+'_per75']] = selected_nodes.groupby('station_id')[i].quantile([0.25,0.75]).unstack()
+        #df['NdNum'] = selected_nodes.groupby('station_id').agg('count')['x']
+
+    stations = stations.merge(df, left_on='station_id', right_on=df.index, how='left')
 
     return stations
 
